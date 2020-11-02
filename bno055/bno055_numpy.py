@@ -53,17 +53,21 @@ while True:
     print("Gravity (m/s^2): {}".format(sensor.gravity))
 
     quat=sensor.quaternion
-
-    flag=False
-    for i in range(4):
-        if quat[i] is None:
-            flag=1
     
-    if flag==True:
+    if quat[i for i in range(4)] is None:
         continue
+
+    #bool flag = False
+    #
+    #for i in range(4):
+    #    if quat[i] is None:
+    #       flag=1
+    #
+    #if flag==True:
+    #    continue'''
     
     quat=quaternion_to_euler_angle_vectorized1(*quat)
-    ##print(type(quat))
+    #print(type(quat))
     print("quat to euler: {}".format(quat))
     
     with open('output_BNO055.csv','a') as f:
