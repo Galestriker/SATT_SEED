@@ -1,7 +1,7 @@
-import Move
 import time
 #import hmc5883l_get_angle
 #import compass
+import Move
 import micropyGPS
 import RPi.GPIO as GPIO
 import pyproj
@@ -13,36 +13,28 @@ import light_get_angle
 import serial
 import threading
 
-Motor = Move(GPIO)
-
+#目標の緯度，経度
 goal_la = 34.72542167 #latitude
 goal_lo = 137.71619667 #longitude
 
-gps = micropyGPS.MicropyGPS(9, 'dd')
+#インスタンス宣言
+Motor = Move(GPIO) #モーター制御のインスタンス
+gps = micropyGPS.MicropyGPS(9, 'dd')　#micropyGPSのインスタンス
+grs80 = pyproj.Geod(ellps='GRS80') # GRS80楕円体　pyprojのインスタンス
 
+#グローバル変数
 own_angle = 0 #own_azimuth
 judge = 0 #
 heading = 0
 
-grs80 = pyproj.Geod(ellps='GRS80') # GRS80楕円体
+#swichPULLUP->fall なんかの割り込み
+#GPIO.setmode(GPIO.BCM)
+#GPIO.setup(18,GPIO.IN,pull_up_down=GPIO.PUD_UP)
+#GPIO.wait_for_edge(18, GPIO.FALLING)
+#print('OK')
 
-#swichPULLUP->fall
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(18,GPIO.IN,pull_up_down=GPIO.PUD_UP)
-GPIO.wait_for_edge(18, GPIO.FALLING)
-print('OK')
-
-def rungps(): # GPSモジュールを読み、GPSオブジェクトを更新する
-    s = serial.Serial('/dev/serial0', 9600, timeout=10)
-    s.readline() # 最初の1行は中途半端なデーターが読めることがあるので、捨てる
-    while True:
-        sentence = s.readline().decode('utf-8') # GPSデーターを読み、文字列に変換する
-        if sentence[0] != '$': # 先頭が'$'でなければ捨てる
-            continue
-        for x in sentence: # 読んだ文字列を解析してGPSオブジェクトにデーターを追加、更新する
-            gps.update(x)
-
-gpsthread = threading.Thread(target=rungps, args=()) # 上の関数を実行するスレッドを生成
+#gpsを裏で動かすスレッド
+gpsthread = threading.Thread(target=rungps, name="gps", args=(gps,)) # 上の関数を実行するスレッドを生成
 gpsthread.daemon = True
 gpsthread.start() # スレッドを起動
 
