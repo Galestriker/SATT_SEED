@@ -20,7 +20,7 @@ class bno055():
         self.i2c = busio.I2C(board.SCL, board.SDA)
         self.sensor = adafruit_bno055.BNO055_I2C(self.i2c)
 
-    def _quaternion_to_euler_angle_vectorized1(self,w, x, y, z):
+    def _quaternion_to_euler_angle_vectorized1(w, x, y, z):
         ysqr = y * y
 
         t0 = +2.0 * (w * x + y * z)
@@ -42,11 +42,11 @@ class bno055():
         return X, Y, Z 
 
     def check(self):
-        return self.sensor.calibration_status[0]
+        return self.sensor.calibration_status[0] #1>=ならおけ
 
-    def bno055(self):
+    def angle(self):
         self._quat = self.sensor.quaternion
-        if  quat[i for i in range(4)] is None:
+        if  self._quat[0] is None or self._quat[1] is None or self._quat[2] is None or self._quat[3] is None:
             return None
         else:
             return  self._quaternion_to_euler_angle_vectorized1(self._quat)
