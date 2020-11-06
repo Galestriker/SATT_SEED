@@ -33,6 +33,7 @@ heading = 0
 #GPIO.wait_for_edge(18, GPIO.FALLING)
 #print('OK')
 
+
 #gpsを裏で動かすスレッド
 gpsthread = threading.Thread(target=rungps, name="gps", args=(gps,)) # 上の関数を実行するスレッドを生成
 gpsthread.daemon = True
