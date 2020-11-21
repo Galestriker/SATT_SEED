@@ -27,7 +27,7 @@ dc_motor.setup()
 
 #gpsの値を更新するやつ
 def rungps(): # GPSモジュールを読み、GPSオブジェクトを更新する
-    s = serial.Serial('/dev/serial0', 9600, timeout=10)
+    s = serial.Serial('/dev/ttyUSB0', 9600, timeout=10)
     s.readline() # 最初の1行は中途半端なデーターが読めることがあるので、捨てる
     while True:
         sentence = s.readline().decode('utf-8') # GPSデーターを読み、文字列に変換する
