@@ -20,7 +20,7 @@ class bno055():
         self.i2c = busio.I2C(board.SCL, board.SDA)
         self.sensor = adafruit_bno055.BNO055_I2C(self.i2c)
 
-    def _quaternion_to_euler_angle_vectorized1(w, x, y, z):
+    def _quaternion_to_euler_angle_vectorized1(self,w, x, y, z):
         ysqr = y * y
 
         t0 = +2.0 * (w * x + y * z)

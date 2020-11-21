@@ -1,5 +1,4 @@
-#import time
-import move
+import dc_motor
 import bno055 as bno
 import micropyGPS
 import pyproj
@@ -7,16 +6,18 @@ import RPi.GPIO as GPIO
 import csv
 import serial
 import threading
+import time
+import numpy as np
 
 #目標の緯度，経度
 goal_la = 34.72542167 #latitude
 goal_lo = 137.71619667 #longitude
 
 #インスタンス宣言
-gps = micropyGPS.MicropyGPS(9, 'dd')　# micropyGPSのインスタンス
-grs80 = pyproj.Geod(ellps='GRS80') # GRS80楕円体　pyprojのインスタンス
+gps = micropyGPS.MicropyGPS(9, 'dd')　#micropyGPSのインスタンス
+grs80 = pyproj.Geod(ellps='GRS80') #GRS80楕円体　pyprojのインスタンス
 #モーター制御初期化
-move.setup()
+dc_motor.setup()
 
 #swichPULLUP->fall なんかの割り込み
 #GPIO.setmode(GPIO.BCM)
@@ -41,13 +42,25 @@ gpsthread = threading.Thread(target=rungps, args=())
 gpsthread.daemon = True
 gpsthread.start() # スレッドを起動
 
-#グローバル変数
-own_angle = 0 #own_azimuth
+#グロ変数
+#角度
+own_angle = 0 #自分の姿勢角
+preown_angle=0 #前回のあらすじ
 judge = 0 #目標角との偏角
 heading = 0 #向かうべき方角
 once = True #初回だけGPSとるフラグ
 pre_azimuth=0　#前回の目標角
 prejudge=0  #前回の偏角
+pre_heading=0 #前回の進行方向角
+#PID
+pre_error=0 #前回の偏差
+sum_error=0 #偏差の累積
+Kp=0 #比例ゲイン
+Ki=0 #積分ゲイン
+Kd=0 #微分ゲイン
+#モーター制御
+threshold=20#角度閾値
+sleep_time=1#モーター制御猶予時間
 
 try:
     while True:
@@ -56,14 +69,17 @@ try:
             continue
         own_angle = bno055.angle()　#角度　東0から時計回りで360
         
-        if own_angle>=0 and own_angle<=90: #北０で右回り～180，左回り～－180の‐180＜0＜180 に補正
+        if own_angle is None: #none返したらbno止まってるので前回own_angle使う
+            own_angle=preown_angle
+            print("bno error preangle is {0}".format(own_angle))
+        print("angle is {0}".format(own_angle))
+
+        preoen_angle=own_angle
+
+        if 0 <= own_angle <= 90: #東0から~360なので，北0で右回り～180，左回り～－180の‐180＜0＜180 に補正
             own_angle+=90
         else:
             own_angle-=270
-
-        if own_angle is None: #none返したらループ
-            continue
-        print("angle is {0}".format(own_angle))
 
         if once == True:
             if gps.clean_sentences > 20: # ちゃんとしたデーターがある程度たまったら出力する
@@ -80,38 +96,48 @@ try:
             time.sleep(0.5)
             once=False
             gpsthread._stop()
+            if azimuth > 180:
+                azimuth = azimuth -360
         else:
-            azimuth =  pre_azimuth - prejudge　#目標角補正
+            azimuth = pre_azimuth - prejudge　#目標角補正
 
-        pre_azimuth = azimuth　#代入しておく
+        pre_azimuth = azimuth　#前回の目標角に代入しておく
         
         print("azimuth is {0}".format(azimuth))    
-    #direct_change
+
+    #進行方向キメ
         judge = azimuth - own_angle
         prejudge=judge
 
         if judge>180:
-            heading = judge -360
+            heading = judge - 360 #headingは自分の角度(own_angle)を0としてそこからの角度
         elif judge<-180:
             heading = 360 + judge
         else:
             heading = judge
         print("heading is {0}".format(heading))
-    #moter_move
-        if heading>20:#rightturn
-            move.pivot_turn_right()
-            time.sleep(0.5)
-            print("right")
-        elif heading<-20:
-            move.pivot_turn_left()
-            time.sleep(0.5)
-            print("left")
-        else:
-            move.forward()
-            time.sleep(0.5)
-            print("move")
-    #distance_process(meter_unit)
 
+    #PID
+        error=np.abs(heading) #偏差(絶対値)
+        u=error*Kp+sum_error*Ki+abs(error-pre_error)*Kd #操作量u,準にpid
+        pre_error=error#前回偏差
+        sum_error+=error#偏差累積
+        u=np.clip(u,0,100)#操作量を0~100に丸める
+
+    #モーター動かすとこ
+        if heading > threshold:#インド人を右に
+            dc_motor.right(u,1)
+            print("right")
+        elif heading < -1*thoreshold:#インド人を左に
+            dc_motor.left(u,1)
+            print("left")
+        else:#前進
+            dc_motor.right(u,1)
+            dc_motor.left(u,1)
+            print("forward")
+        time.sleep(sleep_time)#ふわふわ時間
+
+    #星空の下のdistance_process(meter_unit)
         f = open("datas.csv","a")
         writer = csv.writer(f,lineterminator='\n')
         writer.writerow(["while","azimuth",azimuth,"angle",own_angle,"judge",judge,"heading",heading])
