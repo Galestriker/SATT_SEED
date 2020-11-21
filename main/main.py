@@ -45,12 +45,10 @@ gpsthread.start() # スレッドを起動
 #グロ変数
 #角度
 own_angle = 0 #自分の姿勢角
-preown_angle=0 #前回のあらすじ
+preown_angle=0 #前回の姿勢角
 judge = 0 #目標角との偏角
 heading = 0 #向かうべき方角
 once = True #初回だけGPSとるフラグ
-pre_azimuth=0　#前回の目標角
-prejudge=0  #前回の偏角
 pre_heading=0 #前回の進行方向角
 #PID
 pre_error=0 #前回の偏差
@@ -60,7 +58,7 @@ Ki=0 #積分ゲイン
 Kd=0 #微分ゲイン
 #モーター制御
 threshold=20#角度閾値
-sleep_time=1#モーター制御猶予時間
+sleep_time=1#ループ時間
 
 try:
     while True:
@@ -74,15 +72,13 @@ try:
             print("bno error preangle is {0}".format(own_angle))
         print("angle is {0}".format(own_angle))
 
-        preoen_angle=own_angle
-
         if 0 <= own_angle <= 90: #東0から~360なので，北0で右回り～180，左回り～－180の‐180＜0＜180 に補正
             own_angle+=90
         else:
             own_angle-=270
 
-        if once == True:
-            if gps.clean_sentences > 20: # ちゃんとしたデーターがある程度たまったら出力する
+        if once == True:#GPSは一回だけ取る
+            if gps.clean_sentences > 20: # ちゃんとしたデータがある程度たまったら出力する
             h = gps.timestamp[0] if gps.timestamp[0] < 24 else gps.timestamp[0] - 24
             print('%2d:%02d:%04.1f' % (h, gps.timestamp[1], gps.timestamp[2]))
             print('緯度経度: %2.8f, %2.8f' % (gps.latitude[0], gps.longitude[0]))
@@ -97,29 +93,24 @@ try:
             once=False
             gpsthread._stop()
             if azimuth > 180:
-                azimuth = azimuth -360
+                azimuth = azimuth-360
+            print("azimuth is {0}".format(azimuth))    
+            #進行方向キメ
+            judge = azimuth - own_angle
+
+            if judge>180:
+                heading = judge - 360 #headingは自分の角度(own_angle)を0としてそこからの角度
+            elif judge<-180:
+                heading = 360 + judge
+            else:
+                heading = judge
+            print("heading is {0}".format(heading))
         else:
-            azimuth = pre_azimuth - prejudge　#目標角補正
-
-        pre_azimuth = azimuth　#前回の目標角に代入しておく
-        
-        print("azimuth is {0}".format(azimuth))    
-
-    #進行方向キメ
-        judge = azimuth - own_angle
-        prejudge=judge
-
-        if judge>180:
-            heading = judge - 360 #headingは自分の角度(own_angle)を0としてそこからの角度
-        elif judge<-180:
-            heading = 360 + judge
-        else:
-            heading = judge
-        print("heading is {0}".format(heading))
+            heading=preheading-(own_angle-preown_angle)
 
     #PID
         error=np.abs(heading) #偏差(絶対値)
-        u=error*Kp+sum_error*Ki+abs(error-pre_error)*Kd #操作量u,準にpid
+        u=error*Kp+sum_error*Ki+abs(error-pre_error)*Kd #操作量u,順にpid
         pre_error=error#前回偏差
         sum_error+=error#偏差累積
         u=np.clip(u,0,100)#操作量を0~100に丸める
@@ -137,6 +128,8 @@ try:
             print("forward")
         time.sleep(sleep_time)#ふわふわ時間
 
+        preown_angle=own_angle
+
     #星空の下のdistance_process(meter_unit)
         f = open("datas.csv","a")
         writer = csv.writer(f,lineterminator='\n')
@@ -144,7 +137,6 @@ try:
         f.close()
 
 except KeyboardInterrupt:
-    move.stop()
-    move.clean()
+    dc_motor.cleanup()
     #GPIO.cleanup()
     
