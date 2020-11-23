@@ -60,9 +60,10 @@ Kd=0 #微分ゲイン
 threshold=20#角度閾値
 sleep_time=1#ループ時間
 
+bno055=bno.bno055()#bno055のインスタンス
+
 try:
     while True:
-        bno055=bno.bno055()
         if bno055.check()　< 1:　#bno055のキャリブレーションステータス確認，1以上でおｋ
             continue
         own_angle = bno055.angle()　#角度　東0から時計回りで360
