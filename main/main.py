@@ -24,6 +24,34 @@ dc_motor.setup()
 #GPIO.setup(18,GPIO.IN,pull_up_down=GPIO.PUD_UP)
 #GPIO.wait_for_edge(18, GPIO.FALLING)
 #print('OK')
+#画像でコーン検知する関数は終わりでTrueを無いときFalse
+
+#PID
+def PID(Kp,Ki,Kd,error,pre_error,sum_error):#最後逆転してるの注意な
+    u=error*Kp+sum_error*Ki+(error-pre_error)*Kd #操作量u,順にpid
+    pre_error=error#前回偏差
+    sum_error+=error#偏差累積
+    if u>1:#u>1の時は丸める
+        u=1
+    u*=100#0~100にする
+    u=np.abs(u-100)#逆転
+    return u
+
+def motor(heading,threshold,u,sleep_time):
+    #モーター動かすとこ
+    if heading > threshold:#インド人を右に
+        dc_motor.right(u,1)#右タイヤの回転数を緩める
+        dc_motor.left(100,1)
+        print("right")
+    elif heading < -1*threshold:#インド人を左に
+        dc_motor.left(u,1)#左タイヤの回転数を緩める
+        dc_motor.right(100,1)
+        print("left")
+    else:#前進
+        dc_motor.right(100,1)
+        dc_motor.left(100,1)
+        print("forward")
+    time.sleep(sleep_time)#ふわふわ時間
 
 #gpsの値を更新するやつ
 def rungps(): # GPSモジュールを読み、GPSオブジェクトを更新する
@@ -111,30 +139,10 @@ try:
 
     #PID
         error=np.abs(heading)/180 #偏差(絶対値) 0~1
-        u=error*Kp+sum_error*Ki+(error-pre_error)*Kd #操作量u,順にpid
-        pre_error=error#前回偏差
-        sum_error+=error#偏差累積
-        
-        if u>1:#u>1の時は丸める
-            u=1
-
-        u*=100#0~100にする
-        u=np.abs(u-100)#逆転
-
-    #モーター動かすとこ
-        if heading > threshold:#インド人を右に
-            dc_motor.right(u,1)
-            dc_motor.left(100,1)
-            print("right")
-        elif heading < -1*thoreshold:#インド人を左に
-            dc_motor.left(u,1)
-            dc_motor.right(100,1)
-            print("left")
-        else:#前進
-            dc_motor.right(100,1)
-            dc_motor.left(100,1)
-            print("forward")
-        time.sleep(sleep_time)#ふわふわ時間
+        u=PID(Kp,Ki,Kd,error,pre_error,sum_error)
+    
+    #motor
+        motor(heading,threshold,u,sleep_time)
 
         preown_angle=own_angle#前回の角度保存
 
