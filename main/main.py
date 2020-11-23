@@ -106,14 +106,18 @@ try:
                 heading = judge
             print("heading is {0}".format(heading))
         else:
-            heading=preheading-(own_angle-preown_angle)
+            heading=preheading-(own_angle-preown_angle)#GPSとった後はheadingを更新していく
 
     #PID
-        error=np.abs(heading) #偏差(絶対値)
+        error=np.abs(heading)/180 #偏差(絶対値) 0~1
         u=error*Kp+sum_error*Ki+abs(error-pre_error)*Kd #操作量u,順にpid
         pre_error=error#前回偏差
         sum_error+=error#偏差累積
-        u=np.clip(u,0,100)#操作量を0~100に丸める
+        
+        if u>1:#u>1の時は丸める
+            u=1
+
+        u*=100#0~100にする
 
     #モーター動かすとこ
         if heading > threshold:#インド人を右に
@@ -128,7 +132,7 @@ try:
             print("forward")
         time.sleep(sleep_time)#ふわふわ時間
 
-        preown_angle=own_angle
+        preown_angle=own_angle#前回の角度保存
 
     #星空の下のdistance_process(meter_unit)
         f = open("datas.csv","a")
