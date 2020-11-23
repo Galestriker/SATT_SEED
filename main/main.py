@@ -111,7 +111,7 @@ try:
 
     #PID
         error=np.abs(heading)/180 #偏差(絶対値) 0~1
-        u=error*Kp+sum_error*Ki+abs(error-pre_error)*Kd #操作量u,順にpid
+        u=error*Kp+sum_error*Ki+(error-pre_error)*Kd #操作量u,順にpid
         pre_error=error#前回偏差
         sum_error+=error#偏差累積
         
@@ -119,6 +119,7 @@ try:
             u=1
 
         u*=100#0~100にする
+        u=np.abs(u-100)#逆転
 
     #モーター動かすとこ
         if heading > threshold:#インド人を右に
@@ -128,8 +129,8 @@ try:
             dc_motor.left(u,1)
             print("left")
         else:#前進
-            dc_motor.right(u,1)
-            dc_motor.left(u,1)
+            dc_motor.right(100,1)
+            dc_motor.left(100,1)
             print("forward")
         time.sleep(sleep_time)#ふわふわ時間
 
