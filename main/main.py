@@ -124,9 +124,11 @@ try:
     #モーター動かすとこ
         if heading > threshold:#インド人を右に
             dc_motor.right(u,1)
+            dc_motor.left(100,1)
             print("right")
         elif heading < -1*thoreshold:#インド人を左に
             dc_motor.left(u,1)
+            dc_motor.right(100,1)
             print("left")
         else:#前進
             dc_motor.right(100,1)
@@ -144,5 +146,4 @@ try:
 
 except KeyboardInterrupt:
     dc_motor.cleanup()
-    #GPIO.cleanup()
     
