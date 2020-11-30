@@ -44,6 +44,9 @@ class bno055():
     def check(self):
         return self.sensor.calibration_status[0] #1>=ならおけ
 
+    def accel(self):
+        return self.sensor.acceleration #[x,y,z]の加速度をタプルで返す
+
     def angle(self):
         self._quat = self.sensor.quaternion
         if  self._quat[0] is None or self._quat[1] is None or self._quat[2] is None or self._quat[3] is None:
