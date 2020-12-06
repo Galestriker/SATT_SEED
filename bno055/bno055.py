@@ -49,7 +49,13 @@ class bno055():
 
     def angle(self):
         self._quat = self.sensor.quaternion
+        if  self._quat is None:
+            return None
+        else:
+            return  self._quaternion_to_euler_angle_vectorized1(self._quat)
+        '''
         if  self._quat[0] is None or self._quat[1] is None or self._quat[2] is None or self._quat[3] is None:
             return None
         else:
             return  self._quaternion_to_euler_angle_vectorized1(self._quat)
+        '''    
