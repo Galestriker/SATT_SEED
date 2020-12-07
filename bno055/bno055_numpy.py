@@ -36,9 +36,9 @@ def quaternion_to_euler_angle_vectorized1(w, x, y, z):
     return X, Y, Z 
 
 
-with open('output_BNO055.csv','w') as f:
-        writer = csv.writer(f)
-        writer.writerow(['Temperature (degree C)','Accelerometer (m/s^2)','Magnetometer (microteslas)','Gyroscope (rad/sec)','Euler angle','Quaternion','Linear acceleration (m/s^2)','Gravity (m/s^2)'])
+#with open('output_BNO055.csv','w') as f:
+#        writer = csv.writer(f)
+#        writer.writerow(['Temperature (degree C)','Accelerometer (m/s^2)','Magnetometer (microteslas)','Gyroscope (rad/sec)','Euler angle','Quaternion','Linear acceleration (m/s^2)','Gravity (m/s^2)'])
 
 quat=[]
 
@@ -54,7 +54,17 @@ while True:
 
     quat=sensor.quaternion
     
-    if quat[i for i in range(4)] is None:
+    #if quat[i for i in range(4)] is None:
+    #   continue
+
+
+    bool flag = False
+    
+   
+    if quat is None:
+        flag=True
+    
+    if flag==True:
         continue
 
     #bool flag = False
@@ -69,10 +79,11 @@ while True:
     quat=quaternion_to_euler_angle_vectorized1(*quat)
     #print(type(quat))
     print("quat to euler: {}".format(quat))
+    print(sensor.calibrated)
     
-    with open('output_BNO055.csv','a') as f:
-        writer = csv.writer(f)
-        writer.writerow([sensor.temperature,sensor.acceleration,sensor.magnetic,sensor.gyro,sensor.euler,sensor.quaternion,sensor.linear_acceleration,sensor.gravity,quat])
+    #with open('output_BNO055.csv','a') as f:
+    #    writer = csv.writer(f)
+    #    writer.writerow([sensor.temperature,sensor.acceleration,sensor.magnetic,sensor.gyro,sensor.euler,sensor.quaternion,sensor.linear_acceleration,sensor.gravity,quat])
 
     time.sleep(0.1)
 

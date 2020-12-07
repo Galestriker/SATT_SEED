@@ -7,6 +7,8 @@ import serial
 import threading
 import time
 import numpy as np
+import air_main as air
+import camera_final as camera
 
 #目標の緯度，経度(ここ自動取得にする)
 goal_la = 34.72542167 #latitude
@@ -88,6 +90,7 @@ gpsthread.daemon = True
 gpsthread.start() # スレッドを起動
 
 #変数
+i=0#ループ回数
 #角度
 own_angle = 0 #自分の姿勢角
 preown_angle=0 #前回の姿勢角
@@ -104,7 +107,7 @@ Ki=0 #積分ゲイン
 Kd=0 #微分ゲイン
 #モーター制御
 threshold=20#角度閾値
-sleep_time=1#ループ時間
+sleep_time=1#直進時間
 #時間経過
 first_time=0#GPS初回タイム
 last_time=0#GPS最後に取ったタイム
@@ -116,51 +119,50 @@ pKp=0 #pic比例ゲイン
 pKi=0 #pic積分ゲイン
 pKd=0 #pic微分ゲイン
 lost_paradise=0#見失った時間（とき）
-#ぺこーら大回転
+#ユニバーサル大回転ぺこぺこの舞
 maware=0
 pre_maware=0
 
 bno055=bno.bno055()#bno055のインスタンス
 
 try:
-    while True:
-        ###################地上での準備###################
-        get_goal_GPS=input("get goal gps")
-        if get_goal_GPS=="y":
-            while(gps.clean_sentences < 20):#きちんとした値が20以上とれるまで
-                time.sleep(0.5)
-            h = gps.timestamp[0] if gps.timestamp[0] < 24 else gps.timestamp[0] - 24
-            print('%2d:%02d:%04.1f' % (h, gps.timestamp[1], gps.timestamp[2]))
-            print('緯度経度: %2.8f, %2.8f' % (gps.latitude[0], gps.longitude[0]))
-            print('海抜: %f' % gps.altitude)
-            print(gps.satellites_used)
-            print('衛星番号: (仰角, 方位角, SN比)')
-            goal_la,goal_lo= gps.latitude[0], gps.longitude[0]
-            print('goal_la is {0},goal_lo is {1}'.format(goal_la,goal_lo))          
+###################地上での準備###################
+    get_goal_GPS=input("get goal gps")
+    if get_goal_GPS=="y":
+        while(gps.clean_sentences < 20):#きちんとした値が20以上とれるまで
             time.sleep(0.5)
-        #GPSでゴール座標をとる
-        #GPS_get_goal()#後で作るze
+        h = gps.timestamp[0] if gps.timestamp[0] < 24 else gps.timestamp[0] - 24
+        print('%2d:%02d:%04.1f' % (h, gps.timestamp[1], gps.timestamp[2]))
+        print('緯度経度: %2.8f, %2.8f' % (gps.latitude[0], gps.longitude[0]))
+        print('海抜: %f' % gps.altitude)
+        print(gps.satellites_used)
+        print('衛星番号: (仰角, 方位角, SN比)')
+        goal_la,goal_lo= gps.latitude[0], gps.longitude[0]
+        print('goal_la is {0},goal_lo is {1}'.format(goal_la,goal_lo))          
+        time.sleep(0.5)
 
-        ##################################################
+    air.air_main()#空中投下するばい
 
-        ###################動く準備########################
-        accel_zenkai=bno.accel()
-        while(accel_zenkai[2]>0):#Z軸の加速度が正（ひっくり返っているとき）
-            dc_motor.right(100,1)
-            dc_motor.left(100,1)
-            time.sleep(3) #3秒間前進
+###################動く準備########################
+    accel_zenkai=bno.accel()
+    while(accel_zenkai[2]>0):#Z軸の加速度が正（ひっくり返っているとき）
+        dc_motor.right(100,1)
+        dc_motor.left(100,1)
+        time.sleep(3) #3秒間前進
 
-        while(bno055.check()　< 1): #bno055のキャリブレーションステータス確認，1以上でおｋ
-            dc_motor.right(100,1)#その場で回転
-        own_angle = bno055.angle()　#角度　東0から時計回りで360
+    while(bno055.check()　< 1): #bno055のキャリブレーションステータス確認，1以上でおｋ
+        dc_motor.right(100,1)#その場で回転
+#####################################################
+
+    while True:
+        ####################bno055で角度取得及び変換###########
+        own_angle = bno055.angle()[2]　#z軸周り(ヨー)角度　東0から時計回りで360
         print("angle is {0}".format(own_angle))
 
         if own_angle is None: #none返したらbno止まってるので前回own_angle使う
             own_angle=preown_angle
             print("bno error preangle is {0}".format(own_angle))    
-        #####################################################
 
-        ####################bno角度変換#######################
         if 0 <= own_angle <= 90: #東0から~360なので，北0で右回り～180，左回り～－180の‐180＜0＜180 に補正
             own_angle+=90
         else:
@@ -168,14 +170,16 @@ try:
         #####################################################
 
         if pic_flag==True:#前のループで物体検知できてたら
-            if goal_detect()==True:#赤面積80以上でゴール検知
+            array,judge=camera.capture(i)
+            if judge==True:#赤面積80以上でゴール検知
                 print("succes")#正常終了
                 dc_motor.right(100,0)
                 dc_motor.left(100,0)
                 dc_motor.cleanup()
                 exit()
 
-            pic_error=pic_angle()#画像中のコーンの位置 -1~1
+            pic_error=camera.convert(array,bno055.angle()[1])#画像中のコーンの位置 0~1 第2引数はロール角
+            pic_error=(pic_error-0.5)/0.5#0~1範囲を-1~1に変換
             pic_pid=PID(pKp,pKi,pKd,pic_pre_error,pic_sum_error)
             u=pic_pid.PID(np.abs(pic_error))
             motor(pic_error,u,threshold,sleep_time)
@@ -199,6 +203,8 @@ try:
                 own_angle-=270
             #pre_heading=0
             #heading=pic_error*180
+
+        i+=1#ループ回数
 
         ###################GPSで制御#########################
         dc_motor.left(100,0) #停止
@@ -269,16 +275,16 @@ try:
             dc_motor.right(100,0)
             dc_motor.left(100,0)
             time.sleep(3)
-            maware=bno055.angle()
+            maware=bno055.angle()[2]
             pre_maware=maware
             while(maware-premaware<=360):
                 dc_motor.left(100,1)#回レ
-                maware=bno055.angle()
+                maware=bno055.angle()[2]
                 if(maware-premaware<0):
                     maware=maware+360
                 pre_maware=maware
                 pic_flag=cone_detect()
-                if pic_flag:
+                if pic_flag==True:
                     break    
             if time.time()-first_time >= 60*15:#15分後に終了
                 print("abnormal termination")
@@ -304,4 +310,6 @@ try:
         f.close()
 
 except KeyboardInterrupt:
+    dc_motor.right(100,0)#モータ停止
+    dc_motor.left(100,0)
     dc_motor.cleanup()

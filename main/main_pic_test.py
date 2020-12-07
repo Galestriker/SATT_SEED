@@ -143,7 +143,7 @@ try:
         ###################動く準備########################
         accel_zenkai=bno.accel()
         while(accel_zenkai[2]>0):#Z軸の加速度が正（ひっくり返っているとき）
-            dc_motor.right(100,1)#前進
+            dc_motor.right(100,1)
             dc_motor.left(100,1)
             time.sleep(3) #3秒間前進
 
@@ -164,7 +164,6 @@ try:
             own_angle-=270
         #####################################################
 
-        '''
         if pic_flag==True:#前のループで物体検知できてたら
             if goal_detect()==True:#赤面積80以上でゴール検知
                 print("succes")#正常終了
@@ -197,7 +196,7 @@ try:
                 own_angle-=270
             #pre_heading=0
             #heading=pic_error*180
-        '''
+
         ###################GPSで制御#########################
         dc_motor.left(100,0) #停止
         dc_motor.right(100,0)
@@ -250,19 +249,19 @@ try:
 
         preown_angle=own_angle#前回の角度保存
         pre_heading=heading#pre_headingにheadingを代入
-        '''
+
         #写真を撮る
         pic_flag=cone_detect() #物体検知したらTrue,無かったらFalse ここで書き換えるのでいいのでは
         if pic_flag==True:
             continue#戦闘に戻る  
-        '''
+
         if time.time()-first_time >= 60*15:#15分後に終了
             print("abnormal termination")
             dc_motor.right(100,0) #モータ停止
             dc_motor.left(100,0)
             dc_motor.cleanip()　#clean
             exit()
-        '''
+
         if time.time()-lost_paradise>=10:#見失ってから10秒待ってやる!
             dc_motor.right(100,0)
             dc_motor.left(100,0)
@@ -289,7 +288,7 @@ try:
             #写真を撮る
             pic_flag=cone_detect()
             continue
-        '''
+
         if time.time()-last_time >= 60*3:#3分間待ってやる!
             dc_motor.right(100,0)#モータ停止
             dc_motor.left(100,0)
