@@ -156,19 +156,21 @@ try:
 
     while True:
         ####################bno055で角度取得及び変換###########
-        own_angle = bno055.angle()[2]　#z軸周り(ヨー)角度　東0から時計回りで360
+        own_angle = bno055.angle()#x,y,z軸周りのタプル
         print("angle is {0}".format(own_angle))
 
         if own_angle is None: #none返したらbno止まってるので前回own_angle使う
             own_angle=preown_angle
             print("bno error preangle is {0}".format(own_angle))    
+        else:
+            own_angle=own_angle[2]#z軸周り(ヨー)角度　東0から時計回りで360
 
         if 0 <= own_angle <= 90: #東0から~360なので，北0で右回り～180，左回り～－180の‐180＜0＜180 に補正
             own_angle+=90
         else:
             own_angle-=270
         #####################################################
-
+        
         if pic_flag==True:#前のループで物体検知できてたら
             array,judge=camera.capture(i)
             if judge==True:#赤面積80以上でゴール検知
@@ -188,7 +190,7 @@ try:
                 print("abnormal termination")
                 dc_motor.right(100,0) #モータ停止
                 dc_motor.left(100,0)
-                dc_motor.cleanip()　#clean
+                dc_motor.cleanup()　#clean
                 exit()
 
             #写真をとる
@@ -196,7 +198,15 @@ try:
             if pic_flag==True:
                 continue
             lost_paradise=time.time()#見失った時刻
+
             own_angle = bno055.angle()#9軸に戻るんでもっかいとる
+
+            if own_angle is None: #none返したらbno止まってるので前回own_angle使う
+                own_angle=preown_angle
+                print("bno error preangle is {0}".format(own_angle))    
+            else:
+                own_angle=own_angle[2]
+
             if 0 <= own_angle <= 90: #東0から~360なので，北0で右回り～180，左回り～－180の‐180＜0＜180 に補正
                 own_angle+=90
             else:
@@ -275,11 +285,21 @@ try:
             dc_motor.right(100,0)
             dc_motor.left(100,0)
             time.sleep(3)
-            maware=bno055.angle()[2]
+
+            maware=bno055.angle()#とれるまで待つ
+            while(maware is None):
+                maware=bno055.angle()
+            maware=maware[2]
+
             pre_maware=maware
             while(maware-premaware<=360):
                 dc_motor.left(100,1)#回レ
-                maware=bno055.angle()[2]
+
+                maware=bno055.angle()#とれるまで待つ
+                while(maware is None):
+                    maware=bno055.angle()
+                maware=maware[2]
+
                 if(maware-premaware<0):
                     maware=maware+360
                 pre_maware=maware
