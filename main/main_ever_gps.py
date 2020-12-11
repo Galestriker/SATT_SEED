@@ -1,4 +1,4 @@
-from move import dc_motor
+from move import dc_motor as dcmotor
 from bno055 import bno055 as bno
 from gps import micropyGPS
 #import pyproj

@@ -1,4 +1,4 @@
-from move import dc_motor
+from move import dc_motor as dcmotor
 from bno055 import bno055 as bno
 from gps import micropyGPS
 #import pyproj
@@ -20,7 +20,7 @@ goal_lo = 137.71619667#longitude
 gps = micropyGPS.MicropyGPS(9, 'dd')#micropyGPSのインスタンス
 #grs80 = pyproj.Geod(ellps='GRS80')#GRS80楕円体　pyprojのインスタンス
 #モーター制御初期化
-#dc_motor.setup()
+#dcmotor.setup()
 #画像でコーン検知する関数は終わりでTrueを無いときFalse
 #カメラ
 camera=picamera.PiCamera()
@@ -58,16 +58,16 @@ class PID:
 def motor(heading,u,threshold,sleep_time):
     #モーター動かすとこ
     if heading > threshold:#インド人を右に
-        dc_motor.right(u,1)#右タイヤの回転数を緩める
-        dc_motor.left(100,1)
+        dcmotor.right(u,1)#右タイヤの回転数を緩める
+        dcmotor.left(100,1)
         print("right")
     elif heading < -1*threshold:#インド人を左に
-        dc_motor.left(u,1)#左タイヤの回転数を緩める
-        dc_motor.right(100,1)
+        dcmotor.left(u,1)#左タイヤの回転数を緩める
+        dcmotor.right(100,1)
         print("left")
     else:#前進
-        dc_motor.right(100,1)
-        dc_motor.left(100,1)
+        dcmotor.right(100,1)
+        dcmotor.left(100,1)
         print("forward")
     time.sleep(sleep_time)#ふわふわ時間
 
@@ -150,18 +150,18 @@ try:
     accel_zenkai=bno055.accel()
     print(accel_zenkai)
     while(accel_zenkai[2]<0):#Z軸の加速度が正（ひっくり返っているとき）
-        dc_motor.right(100,1)
-        dc_motor.left(100,1)
+        dcmotor.right(100,1)
+        dcmotor.left(100,1)
         time.sleep(3) #3秒間前進
 
-    dc_motor.right(100,0)#モータ停止
-    dc_motor.left(100,0)
+    dcmotor.right(100,0)#モータ停止
+    dcmotor.left(100,0)
 
     while(bno055.check()< 1): #bno055のキャリブレーションステータス確認，1以上でおｋ
-        dc_motor.right(100,1)#その場で左回転
+        dcmotor.right(100,1)#その場で左回転
 
-    dc_motor.right(100,0)#モータ停止
-    dc_motor.left(100,0)
+    dcmotor.right(100,0)#モータ停止
+    dcmotor.left(100,0)
 #####################################################
 
     while True:
@@ -187,8 +187,8 @@ try:
         #####################################################
 
         ###################GPSで制御#########################
-        dc_motor.left(100,0) #停止
-        dc_motor.right(100,0)
+        dcmotor.left(100,0) #停止
+        dcmotor.right(100,0)
         if GPS_flag == True:#GPSは初回及び3分後のみの回だけ取る
             while(gps.clean_sentences < 20):#きちんとした値が20以上とれるまで
                 time.sleep(0.5)
@@ -243,14 +243,14 @@ try:
 
         if time.time()-first_time >= 60*15:#15分後に終了
             print("abnormal termination")
-            dc_motor.right(100,0) #モータ停止
-            dc_motor.left(100,0)
-            dc_motor.cleanup()#clean
+            dcmotor.right(100,0) #モータ停止
+            dcmotor.left(100,0)
+            dcmotor.cleanup()#clean
             exit()
 
         if time.time()-last_time >= 60*3:#3分間待ってやる!
-            dc_motor.right(100,0)#モータ停止
-            dc_motor.left(100,0)
+            dcmotor.right(100,0)#モータ停止
+            dcmotor.left(100,0)
             GPS_flag=True
 
     #星空の下のdistance_process(meter_unit)
@@ -260,6 +260,6 @@ try:
         f.close()
 
 except KeyboardInterrupt:
-    dc_motor.right(100,0)#モータ停止
-    dc_motor.left(100,0)
-    dc_motor.cleanup()
+    dcmotor.right(100,0)#モータ停止
+    dcmotor.left(100,0)
+    dcmotor.cleanup()
