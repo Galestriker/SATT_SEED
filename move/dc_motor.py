@@ -1,66 +1,82 @@
-import RPi.GPIO as GPIO
+import pigpio
 
-MOTOR_RIGHT_PIN1 = 11
-MOTOR_RIGHT_PIN2 = 13
-MOTOR_RIGHT_PWM = 32
+#ピン指定
+RIGHT_MOTOR_GPIO_NUMBER1 = 16
+RIGHT_MOTOR_GPIO_NUMBER2 = 20
+RIGHT_MOTOR_PWM_GPIO_NUMBER = 12
 
-MOTOR_LEFT_PIN1 = 29
-MOTOR_LEFT_PIN2 = 31
-MOTOR_LEFT_PWM = 33
+LEFT_MOTOR_GPIO_NUMBER1 = 5
+LEFT_MOTOR_GPIO_NUMBER2 = 6
+LEFT_MOTOR_PWM_GPIO_NUMBER = 13
 
-def setup():
-    GPIO.setmode(GPIO.BOARD)
-    GPIO.setup(MOTOR_RIGHT_PWM, GPIO.OUT)
-    GPIO.setup(MOTOR_LEFT_PWM, GPIO.OUT)
+#周波数指定
+MOTOR_FREQ = 50
 
-    GPIO.setup(MOTOR_RIGHT_PIN1, GPIO.OUT)
-    GPIO.setup(MOTOR_RIGHT_PIN2, GPIO.OUT)
+#インスタンスを作成
+right_motor1 = pigpio.pi()
+right_motor2 = pigpio.pi()
+right_motor_pwm = pigpio.pi()
+left_motor1 = pigpio.pi()
+left_motor2 = pigpio.pi()
+left_motor_pwm = pigpio.pi()
 
-    GPIO.setup(MOTOR_LEFT_PIN1, GPIO.OUT)
-    GPIO.setup(MOTOR_LEFT_PIN2, GPIO.OUT)
+#GPIO出力設定
+right_motor1.set_mode(RIGHT_MOTOR_GPIO_NUMBER1, pigpio.OUTPUT)
+right_motor2.set_mode(RIGHT_MOTOR_GPIO_NUMBER2, pigpio.OUTPUT)
+right_motor_pwm.set_mode(RIGHT_MOTOR_PWM_GPIO_NUMBER, pigpio.OUTPUT)
+left_motor1.set_mode(LEFT_MOTOR_GPIO_NUMBER1, pigpio.OUTPUT)
+left_motor2.set_mode(LEFT_MOTOR_GPIO_NUMBER2,pigpio.OUTPUT)
+left_motor_pwm.set_mode(LEFT_MOTOR_PWM_GPIO_NUMBER, pigpio.OUTPUT)
 
-    r = GPIO.PWM(MOTOR_RIGHT_PWM, 50)
-    l = GPIO.PWM(MOTOR_LEFT_PWM, 50)
-
-    r.start(0)
-    l.start(0)
 
 #dcで回転数指定，dirで回転方向指定です．
 #dir は 1:CW/CCW  0:STOP  -1:CCW/CW  2:BRAKE
-#CCW：反時計回り　CW：時計回り
 #(0.0 <= dc <= 100.0) speed
 
 def right(dc,dir):
-    r.ChangeDutyCycle(dc)
+    right_motor_pwm.hardware_PWM(MOTOR_RIGHT_PWM_GPIO_NUMBER, MOTOR_FREQ, int(dc*10000))
+    left_motor_pwm.hardware_PWM(MOTOR_LEFT_PWM_GPIO_NUMBER, MOTOR_FREQ, int(dc*10000))
+    
     if dir == 1: #CW/CCW
-        GPIO.output(MOTOR_RIGHT_PIN1, GPIO.LOW)
-        GPIO.output(MOTOR_RIGHT_PIN2, GPIO.HIGH)
+        right_motor1.write(RIGHT_MOTOR_GPIO_NUMBER1, 0)
+        right_motor2.write(RIGHT_MOTOR_GPIO_NUMBER2, 1)
     elif dir == 0: #STOP
-        GPIO.output(MOTOR_RIGHT_PIN1, GPIO.LOW)
-        GPIO.output(MOTOR_RIGHT_PIN2, GPIO.LOW)
+        right_motor1.write(RIGHT_MOTOR_GPIO_NUMBER1, 0)
+        right_motor2.write(RIGHT_MOTOR_GPIO_NUMBER2, 0)
     elif dir == -1: #CCW/CW
-        GPIO.output(MOTOR_RIGHT_PIN1, GPIO.HIGH)
-        GPIO.output(MOTOR_RIGHT_PIN2, GPIO.LOW)
+        right_motor1.write(RIGHT_MOTOR_GPIO_NUMBER1, 1)
+        right_motor2.write(RIGHT_MOTOR_GPIO_NUMBER2, 0)
     elif dir == 2: #BRAKE
-        GPIO.output(MOTOR_RIGHT_PIN1, GPIO.HIGH)
-        GPIO.output(MOTOR_RIGHT_PIN2, GPIO.HIGH)
+        right_motor1.write(RIGHT_MOTOR_GPIO_NUMBER1, 1)
+        right_motor2.write(RIGHT_MOTOR_GPIO_NUMBER2, 1)
 
 def left(dc,dir):
-    l.ChangeDutyCycle(dc)
+    right_motor_pwm.hardware_PWM(RIGHT_MOTOR_PWM_GPIO_NUMBER, MOTOR_FREQ, int(dc*10000))
+    left_motor_pwm.hardware_PWM(LEFT_MOTOR_PWM_GPIO_NUMBER, MOTOR_FREQ, int(dc*10000))
+    
     if dir == 1: #CW/CCW
-        GPIO.output(MOTOR_LEFT_PIN1, GPIO.LOW)
-        GPIO.output(MOTOR_LEFT_PIN2, GPIO.HIGH)
+        left_motor1.write(LEFT_MOTOR_GPIO_NUMBER1, 0)
+        left_motor2.write(LEFT_MOTOR_GPIO_NUMBER2, 1)
     elif dir == 0: #STOP
-        GPIO.output(MOTOR_LEFT_PIN1, GPIO.LOW)
-        GPIO.output(MOTOR_LEFT_PIN2, GPIO.LOW)
+        left_motor1.write(LEFT_MOTOR_GPIO_NUMBER1, 0)
+        left_motor2.write(LEFT_MOTOR_GPIO_NUMBER2, 0)
     elif dir == -1: #CCW/CW
-        GPIO.output(MOTOR_LEFT_PIN1, GPIO.HIGH)
-        GPIO.output(MOTOR_LEFT_PIN2, GPIO.LOW)
+        left_motor1.write(LEFT_MOTOR_GPIO_NUMBER1, 1)
+        left_motor2.write(LEFT_MOTOR_GPIO_NUMBER2, 0)
     elif dir == 2: #BRAKE
-        GPIO.output(MOTOR_LEFT_PIN1, GPIO.HIGH)
-        GPIO.output(MOTOR_LEFT_PIN2, GPIO.HIGH)
+        left_motor1.write(LEFT_MOTOR_GPIO_NUMBER1, 1)
+        left_motor2.write(LEFT_MOTOR_GPIO_NUMBER2, 1)
     
 def cleanup():
-    r.stop()
-    l.stop()
-    GPIO.cleanup()
+    right_motor_pwm.hardware_PWM(RIGHT_MOTOR_PWM_GPIO_NUMBER, MOTOR_FREQ, 0)
+    left_motor_pwm.hardware_PWM(LEFT_MOTOR_PWM_GPIO_NUMBER, MOTOR_FREQ, 0)
+    right_motor1.write(RIGHT_MOTOR_GPIO_NUMBER1, 0)
+    right_motor2.write(RIGHT_MOTOR_GPIO_NUMBER2, 0)
+    left_motor1.write(LEFT_MOTOR_GPIO_NUMBER1, 0)
+    left_motor2.write(LEFT_MOTOR_GPIO_NUMBER2, 0)
+    right_motor1.stop()
+    right_motor2.stop()
+    right_motor_pwm.stop()
+    left_motor1.stop()
+    left_motor2.stop()
+    left_motor_pwm.stop()

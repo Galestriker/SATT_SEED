@@ -18,13 +18,7 @@ goal_lo = 137.71619667 #longitude
 gps = micropyGPS.MicropyGPS(9, 'dd')　#micropyGPSのインスタンス
 grs80 = pyproj.Geod(ellps='GRS80') #GRS80楕円体　pyprojのインスタンス
 #モーター制御初期化
-dc_motor.setup()
-
-#swichPULLUP->fall なんかの割り込み
-#GPIO.setmode(GPIO.BCM)
-#GPIO.setup(18,GPIO.IN,pull_up_down=GPIO.PUD_UP)
-#GPIO.wait_for_edge(18, GPIO.FALLING)
-#print('OK')
+#dc_motor.setup()
 #画像でコーン検知する関数は終わりでTrueを無いときFalse
 
 #PID

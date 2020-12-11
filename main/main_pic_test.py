@@ -16,7 +16,7 @@ goal_lo = 137.71619667 #longitude
 gps = micropyGPS.MicropyGPS(9, 'dd')　#micropyGPSのインスタンス
 grs80 = pyproj.Geod(ellps='GRS80') #GRS80楕円体　pyprojのインスタンス
 #モーター制御初期化
-dc_motor.setup()
+#dc_motor.setup()
 
 #swichPULLUP->fall なんかの割り込み
 #GPIO.setmode(GPIO.BCM)
