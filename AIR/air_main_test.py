@@ -1,5 +1,5 @@
 import time
-from MS5607 import MS5607
+import MS5607
 import csv
 import pigpio
 
