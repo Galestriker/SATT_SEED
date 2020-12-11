@@ -61,7 +61,7 @@ def capture(i):
     関数内でループをさせていないので，写真を保存するのであれば名前を変える必要があります．
     私が良くやるのはループの回数を名前にする方法です．
     "./"+src(i)+".jpg"などです．
-    
+
     """
     size=(3200,2400)
     image1=cv2.imread("./hattoricorn/"+str(i)+".jpg")
@@ -70,7 +70,7 @@ def capture(i):
     #image1=cv2.imread("./a.jpg")
     #ノイズ処理です．ただ，csvが割と感度が良いのでいらないかもしれないです．
     image1=cv2.resize(image1,size)
-    #image1 = cv2.GaussianBlur(image1, (5, 5), 3)  
+    #image1 = cv2.GaussianBlur(image1, (5, 5), 3)
     #別に定義された関数を用いています．やろうと思えば一つの関数になると思いますが高級関数的な使い方になるのでやめました．
     mono_src = red_detect(image1)
     #0じゃない値の数を数えます．（結局面積を求めていることと同じ．単位はピクセル）
@@ -105,7 +105,7 @@ def convert(array,theta,scale=1.0):
     h,w=array.shape
     array_pad = np.pad(array,((1300,1300),(900,900)),"constant")
     oy, ox = int(array_pad.shape[0]/2), int(array_pad.shape[1]/2)
-    R = cv2.getRotationMatrix2D((ox, oy), theta, scale)  
+    R = cv2.getRotationMatrix2D((ox, oy), theta, scale)
     dst = cv2.warpAffine(array_pad, R, (5000, 5000))    # アフィン変換
     cv2.imwrite("./hattorik/"+str(i)+".png", dst)
     array_sum = dst.sum(axis=0)
@@ -120,7 +120,7 @@ def convert(array,theta,scale=1.0):
     return array_index/(num_devide-1)
 
 
-        
+
 if __name__ == '__main__':
     with open("a.csv","w") as f:
         writer = csv.writer(f, lineterminator='\n')
@@ -130,7 +130,3 @@ if __name__ == '__main__':
                 print("finish")
             select = convert(array,0)
             writer.writerow([i,select])
-        
-        
-    
-

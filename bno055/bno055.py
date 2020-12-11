@@ -39,7 +39,7 @@ class bno055:
         t4 = +1.0 - 2.0 * (ysqr + z * z)
         Z = np.degrees(np.arctan2(t3, t4))
 
-        return X, Y, Z 
+        return X, Y, Z
 
     def linear_accel(self):
         return self.sensor.linear_acceleration
@@ -53,8 +53,8 @@ class bno055:
         quat=self.sensor.quaternion
         linear=self.sensor.linear_acceleration
         gravity=self.sensor.gravity
-        
-        return temp,accel,magnet,gyro,raw_euler,quat,linear,gravity 
+
+        return temp,accel,magnet,gyro,raw_euler,quat,linear,gravity
 
     def check_all(self):
         return self.sensor.calibration_status,self.sensor.calibrated

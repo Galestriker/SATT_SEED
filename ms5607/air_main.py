@@ -22,7 +22,7 @@ def air_main():
     xbee.set_mode(XBee_SLEEP_GPIO_NUMBER, pigpio.OUTPUT)
     xbee.write(XBee_SLEEP_GPIO_NUMBER, 0)
     print('Xbee sleep off')
-    
+
     servo = pigpio.pi()
     servo.set_mode(SERVO_GPIO_NUMBER, pigpio.OUTPUT)
     dc = convert_dc_SG90(0)
@@ -67,14 +67,14 @@ def air_main():
         with open(filename,'a') as f:
             writer = csv.writer(f)
             writer.writerow([tmp, converted / 100, altitude])
-            
+
         if altitude > ALT1:
             print("break")
             break
 
         time.sleep(TIME1)
         #print("up")
-        
+
     while True:
         temperature = ms5607.getDigitalTemperature()
         pressure = ms5607.getDigitalPressure()

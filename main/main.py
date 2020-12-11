@@ -78,7 +78,7 @@ def rungps(): # GPSモジュールを読み、GPSオブジェクトを更新す�
             gps.update(x)
 
 #gpsを裏で動かすスレッド
-gpsthread = threading.Thread(target=rungps, args=()) 
+gpsthread = threading.Thread(target=rungps, args=())
 #gpsthread = threading.Thread(target=rungps, name="gps", args=(gps,)) # 上の関数を実行するスレッドを生成
 gpsthread.daemon = True
 gpsthread.start() # スレッドを起動
@@ -132,7 +132,7 @@ try:
         print(gps.satellites_used)
         print('衛星番号: (仰角, 方位角, SN比)')
         goal_la,goal_lo= gps.latitude[0], gps.longitude[0]
-        print('goal_la is {0},goal_lo is {1}'.format(goal_la,goal_lo))          
+        print('goal_la is {0},goal_lo is {1}'.format(goal_la,goal_lo))
         time.sleep(0.5)
 
     input("This is the final phase")
@@ -156,7 +156,7 @@ try:
 
         if own_angle is None: #none返したらbno止まってるので前回own_angle使う
             own_angle=preown_angle
-            print("bno error preangle is {0}".format(own_angle))    
+            print("bno error preangle is {0}".format(own_angle))
         else:
             own_angle=own_angle[2]#z軸周り(ヨー)角度　東0から時計回りで360
 
@@ -165,7 +165,7 @@ try:
         else:
             own_angle-=270
         #####################################################
-        
+
         if pic_flag==True:#前のループで物体検知できてたら
             array,judge=camera.capture(i)
             if judge==True:#赤面積80以上でゴール検知
@@ -198,7 +198,7 @@ try:
 
             if own_angle is None: #none返したらbno止まってるので前回own_angle使う
                 own_angle=preown_angle
-                print("bno error preangle is {0}".format(own_angle))    
+                print("bno error preangle is {0}".format(own_angle))
             else:
                 own_angle=own_angle[2]
 
@@ -224,7 +224,7 @@ try:
             print(gps.satellites_used)
             print('衛星番号: (仰角, 方位角, SN比)')
             own_la,own_lo= gps.latitude[0], gps.longitude[0]
-            print('own_la is {0},own_lo is {1}'.format(own_la,own_lo))          
+            print('own_la is {0},own_lo is {1}'.format(own_la,own_lo))
             azimuth, bkw_azimuth, distance = grs80.inv(own_lo, own_la, goal_lo, goal_la)
             print(azimuth, bkw_azimuth, distance)
             time.sleep(0.5)
@@ -238,7 +238,7 @@ try:
         ###################進行方向等角度変換###################
             if azimuth > 180: #目標角azimuthは北を0として-180~180にする
                 azimuth = azimuth-360
-            print("azimuth is {0}".format(azimuth))    
+            print("azimuth is {0}".format(azimuth))
             #偏差は
             judge = azimuth - own_angle
 
@@ -252,7 +252,7 @@ try:
             GPS_flag=False
         else:
             heading=preheading-(own_angle-preown_angle)#GPSとった後は自分の角度差でheadingを更新していく
-        #######################################################        
+        #######################################################
 
         preown_angle=own_angle#前回の角度保存
         pre_heading=heading#pre_headingにheadingを代入
@@ -267,7 +267,7 @@ try:
         #写真を撮る
         pic_flag=cone_detect() #物体検知したらTrue,無かったらFalse ここで書き換えるのでいいのでは
         if pic_flag==True:
-            continue#戦闘に戻る  
+            continue#戦闘に戻る
 
         if time.time()-first_time >= 60*15:#15分後に終了
             print("abnormal termination")
@@ -301,7 +301,7 @@ try:
                 pre_maware=maware
                 pic_flag=cone_detect()
                 if pic_flag==True:
-                    break    
+                    break
 
             if time.time()-first_time >= 60*15:#15分後に終了
                 print("abnormal termination")

@@ -36,7 +36,7 @@ left_motor_pwm.set_mode(LEFT_MOTOR_PWM_GPIO_NUMBER, pigpio.OUTPUT)
 def right(dc,dir):
     right_motor_pwm.hardware_PWM(MOTOR_RIGHT_PWM_GPIO_NUMBER, MOTOR_FREQ, int(dc*10000))
     left_motor_pwm.hardware_PWM(MOTOR_LEFT_PWM_GPIO_NUMBER, MOTOR_FREQ, int(dc*10000))
-    
+
     if dir == 1: #CW/CCW
         right_motor1.write(RIGHT_MOTOR_GPIO_NUMBER1, 0)
         right_motor2.write(RIGHT_MOTOR_GPIO_NUMBER2, 1)
@@ -53,7 +53,7 @@ def right(dc,dir):
 def left(dc,dir):
     right_motor_pwm.hardware_PWM(RIGHT_MOTOR_PWM_GPIO_NUMBER, MOTOR_FREQ, int(dc*10000))
     left_motor_pwm.hardware_PWM(LEFT_MOTOR_PWM_GPIO_NUMBER, MOTOR_FREQ, int(dc*10000))
-    
+
     if dir == 1: #CW/CCW
         left_motor1.write(LEFT_MOTOR_GPIO_NUMBER1, 0)
         left_motor2.write(LEFT_MOTOR_GPIO_NUMBER2, 1)
@@ -66,7 +66,7 @@ def left(dc,dir):
     elif dir == 2: #BRAKE
         left_motor1.write(LEFT_MOTOR_GPIO_NUMBER1, 1)
         left_motor2.write(LEFT_MOTOR_GPIO_NUMBER2, 1)
-    
+
 def cleanup():
     right_motor_pwm.hardware_PWM(RIGHT_MOTOR_PWM_GPIO_NUMBER, MOTOR_FREQ, 0)
     left_motor_pwm.hardware_PWM(LEFT_MOTOR_PWM_GPIO_NUMBER, MOTOR_FREQ, 0)
