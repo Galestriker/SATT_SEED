@@ -6,14 +6,14 @@ import pigpio
 def air_main():
     SERVO_GPIO_NUMBER = 19
     XBee_SLEEP_GPIO_NUMBER = 18
-    ALT1 = 10                   #切り離しを可能にする高度
+    ALT1 = 2                   #切り離しを可能にする高度
     ALT2 = 0.2                  #切り離し高度
     TIME1 = 1                   #上昇中のデータ取得間隔
     TIME2 = 0.1                 #落下中のデータ取得間隔
     FREQ = 50                   #PWMの周波数，S0270では100,SGでは50
     ANGLE = 90                  #サーボ回転角度，S0270では45，SG90では90
     ONCE = True
-    BACKUP_ALT = 2              #バックアップの切り離し判定高度
+    BACKUP_ALT = 1              #バックアップの切り離し判定高度
     BACKUP_DETACH_TIME = 60     #バックアップの切り離しまでの時間
     filename = 'output_air_main.csv'
 

@@ -136,7 +136,6 @@ try:
         time.sleep(0.5)
 
     input("This is the final phase")
-
     air.air_main()#空中投下するばい
 
 ###################動く準備########################
@@ -147,7 +146,7 @@ try:
         time.sleep(3) #3秒間前進
 
     while(bno055.check()　< 1): #bno055のキャリブレーションステータス確認，1以上でおｋ
-        dc_motor.right(100,1)#その場で回転
+        dc_motor.right(100,1)#その場で左回転
 #####################################################
 
     while True:
@@ -255,15 +254,15 @@ try:
             heading=preheading-(own_angle-preown_angle)#GPSとった後は自分の角度差でheadingを更新していく
         #######################################################        
 
+        preown_angle=own_angle#前回の角度保存
+        pre_heading=heading#pre_headingにheadingを代入
+
     #PID
         error=np.abs(heading)/180 #偏差(絶対値) 0~1
         pid=PID(Kp,Ki,Kd,pre_error,sum_error)
         u=pid.PID(error)
     #motor
         motor(heading,u,threshold,sleep_time)#動かす
-
-        preown_angle=own_angle#前回の角度保存
-        pre_heading=heading#pre_headingにheadingを代入
 
         #写真を撮る
         pic_flag=cone_detect() #物体検知したらTrue,無かったらFalse ここで書き換えるのでいいのでは
@@ -286,10 +285,11 @@ try:
             while(maware is None):
                 maware=bno055.angle()
             maware=maware[2]
+            orig_maware=maware
 
             pre_maware=maware
-            while(maware-premaware<=360):
-                dc_motor.left(100,1)#回レ
+            while(orig_maware-maware<=360):
+                dc_motor.left(100,1)#時計回レ
 
                 maware=bno055.angle()#とれるまで待つ
                 while(maware is None):
@@ -302,6 +302,7 @@ try:
                 pic_flag=cone_detect()
                 if pic_flag==True:
                     break    
+
             if time.time()-first_time >= 60*15:#15分後に終了
                 print("abnormal termination")
                 dc_motor.right(100,0)

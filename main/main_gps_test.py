@@ -7,8 +7,8 @@ import serial
 import threading
 import time
 import numpy as np
-import air_main as air
-import camera_final as camera
+import air_main_test as air
+#import camera_final as camera
 
 #目標の緯度，経度(ここ自動取得にする)
 goal_la = 34.72542167 #latitude
@@ -135,7 +135,8 @@ try:
         print('goal_la is {0},goal_lo is {1}'.format(goal_la,goal_lo))          
         time.sleep(0.5)
 
-    #air.air_main()#空中投下するばい
+    input("This is the final phase")
+    air.air_main()#空中投下するばい
 
 ###################動く準備########################
     accel_zenkai=bno.accel()
@@ -210,15 +211,15 @@ try:
             heading=preheading-(own_angle-preown_angle)#GPSとった後は自分の角度差でheadingを更新していく
         #######################################################        
 
+        preown_angle=own_angle#前回の角度保存
+        pre_heading=heading#pre_headingにheadingを代入
+
     #PID
         error=np.abs(heading)/180 #偏差(絶対値) 0~1
         pid=PID(Kp,Ki,Kd,pre_error,sum_error)
         u=pid.PID(error)
     #motor
         motor(heading,u,threshold,sleep_time)#動かす
-
-        preown_angle=own_angle#前回の角度保存
-        pre_heading=heading#pre_headingにheadingを代入
 
         if time.time()-first_time >= 60*15:#15分後に終了
             print("abnormal termination")
