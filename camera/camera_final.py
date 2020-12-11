@@ -42,7 +42,7 @@ def capture(i):
     camera.capture("./"+str(i)+".jpg")
     #保存した画像の読み込みです．保存しない方が早いかもしれないので変更してもよいかも
     image1=cv2.imread("./"+str(i)+".jpg")
-    image1 = cv2.resize(image1, size)    
+    image1 = cv2.resize(image1, size)
     #ノイズ処理です．ただ，csvが割と感度が良いのでいらないかもしれないです．
     #image1 = cv2.GaussianBlur(image1, (5, 5), 3)
     #別に定義された関数を用いています．やろうと思えば一つの関数になると思いますが高級関数的な使い方になるのでやめました．
@@ -53,10 +53,18 @@ def capture(i):
     cv2.imwrite("./hattorik/"+str(i)+".jpg", mono_src)
     return mono_src
 
-def judge(array):
+def goal_judge(array):
     num=np.count_nonzero(array)
     scal=num/3200/2400
     if scale >= 0.8:
+        bi = True
+    else:
+        bi = False
+
+def obj_judge(array):
+    num=np.count_nonzero(array)
+    scal=num/3200/2400
+    if scale >= 0.05:
         bi = True
     else:
         bi = False
@@ -114,7 +122,7 @@ if __name__ == '__main__':
         writer = csv.writer(f, lineterminator='\n')
         for i in range(1, 25, 1):
             array = capture(i)
-            judgement=judge(array)
+            judgement=goal_judge(array)
             if judgement == True:
                 print("finish")
             select = convert(array, 0)

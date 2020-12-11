@@ -1,5 +1,5 @@
 import time
-import MS5607
+from MS5607 import MS5607
 import csv
 import pigpio
 
@@ -136,5 +136,5 @@ def convert_dc_SG90(deg):
     return ((deg - deg_min) * (dc_max - dc_min) / (deg_max - deg_min) + dc_min)
 
 
-#if __name__ == "__main__":
-#    air_main()
+if __name__ == "__main__":
+    air_main()

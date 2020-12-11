@@ -165,6 +165,7 @@ try:
 #####################################################
 
     while True:
+        GPS_flag=True
         ####################bno055で角度取得及び変換###########
         own_angle = bno055.angle()#x,y,z軸周りのタプル
         print("angle is {0}".format(own_angle))
@@ -185,6 +186,57 @@ try:
         else:
             own_angle-=270
         #####################################################
+
+        if pic_flag==True:#前のループで物体検知できてたら
+            i+=1#写真の数
+            array=camera.capture(i)
+            judgement=camera.goal_judge(array)
+            if judgement==True:#赤面積80以上でゴール検知
+                print("succes")#正常終了
+                dc_motor.right(100,0)
+                dc_motor.left(100,0)
+                dc_motor.cleanup()
+                exit()
+
+            lean_angle = bno055.angle()#x,y,z軸周りのタプル
+            #print("errangle is {0}".format(err_angle))
+            while lean_angle is None: #none返したらbno止まってるので出るまで待つ
+                lean_angle=bno055.angle()
+                print("bno error preangle is {0}".format(lean_angle))
+            lean_angle=lean_angle[0]#x軸周り(ロール)角度　東0から時計回りで360
+
+            pic_error=camera.convert(array,lean_angle)#画像中のコーンの位置 0~1 第2引数はロール角
+            pic_error=(pic_error-0.5)/0.5#0~1範囲を-1~1に変換
+            u=pic_pid.PID(np.abs(pic_error))
+            motor(pic_error,u,threshold,sleep_time)
+
+            if time.time()-first_time>=15*60:
+                print("abnormal termination")
+                dc_motor.right(100,0) #モータ停止
+                dc_motor.left(100,0)
+                dc_motor.cleanup()#clean
+                exit()
+
+            #写真をとる
+            i+=1#写真の数
+            array=camera.capture(i)
+            pic_flag=camera.obj_judge(array)#物体検知
+            if pic_flag==True:
+                continue
+            lost_paradise=time.time()#見失った時刻
+
+            own_angle = bno055.angle()#9軸に戻るんでもっかいとる
+            while own_angle is None: #none返したらbno止まってるので出るまで待つ使う
+                own_angle=bno055.angle()
+                print("bno error preangle is {0}".format(own_angle))
+            own_angle=own_angle[2]#z軸周り(ヨー)角度　東0から時計回りで360
+
+            if 0 <= own_angle <= 90: #東0から~360なので，北0で右回り～180，左回り～－180の‐180＜0＜180 に補正
+                own_angle+=90
+            else:
+                own_angle-=270
+            #pre_heading=0
+            #heading=pic_error*180
 
         ###################GPSで制御#########################
         dc_motor.left(100,0) #停止
@@ -241,12 +293,63 @@ try:
     #motor
         motor(heading,u,threshold,sleep_time)#動かす
 
+        #写真を撮る
+        i+=1#写真の数
+        array=camera.capture(i)
+        pic_flag=camera.obj_judge(array)#物体検知したらTrue,無かったらFalse
+
+        if pic_flag==True:
+            continue#戦闘に戻る
+
         if time.time()-first_time >= 60*15:#15分後に終了
             print("abnormal termination")
             dc_motor.right(100,0) #モータ停止
             dc_motor.left(100,0)
             dc_motor.cleanup()#clean
             exit()
+
+        if time.time()-lost_paradise>=10:#見失ってから10秒待ってやる!
+            dc_motor.right(100,0)
+            dc_motor.left(100,0)
+            time.sleep(3)
+
+            maware=bno055.angle()#とれるまで待つ
+            while(maware is None):
+                maware=bno055.angle()
+            maware=maware[2]
+            orig_maware=maware
+
+            pre_maware=maware
+            while(orig_maware-maware<=360):
+                dc_motor.left(100,1)#時計回レ
+
+                maware=bno055.angle()#とれるまで待つ
+                while(maware is None):
+                    maware=bno055.angle()
+                maware=maware[2]
+
+                if(maware-pre_maware<0):
+                    maware=maware+360
+                pre_maware=maware
+                i+=1#写真の数
+                array=camera.capture(i)
+                pic_flag=camera.obj_judge(array)#物体検知したらTrue,無かったらFalse
+                if pic_flag==True:
+                    break
+
+            if time.time()-first_time >= 60*15:#15分後に終了
+                print("abnormal termination")
+                dc_motor.right(100,0)
+                dc_motor.left(100,0)
+                dc_motor.cleanup()
+                exit()
+            GPS_flag=True
+        else:
+            #写真を撮る
+            i+=1#写真の数
+            array=camera.capture(i)
+            pic_flag=camera.obj_judge(array)#物体検知したらTrue,無かったらFalse
+            continue
 
         if time.time()-last_time >= 60*3:#3分間待ってやる!
             dc_motor.right(100,0)#モータ停止

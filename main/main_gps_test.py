@@ -7,20 +7,24 @@ import serial
 import threading
 import time
 import numpy as np
-from AIR import air_main_test as air
-#import camera_final as camera
+from AIR import air_main as air
+from camera import camera_final as camera
 from gps import gps_calc
+import picamera
 
 #目標の緯度，経度(ここ自動取得にする)
-goal_la = 34.72542167 #latitude
-goal_lo = 137.71619667 #longitude
+goal_la = 34.72542167#latitude
+goal_lo = 137.71619667#longitude
 
 #インスタンス宣言
 gps = micropyGPS.MicropyGPS(9, 'dd')#micropyGPSのインスタンス
-#grs80 = pyproj.Geod(ellps='GRS80') #GRS80楕円体　pyprojのインスタンス
+#grs80 = pyproj.Geod(ellps='GRS80')#GRS80楕円体　pyprojのインスタンス
 #モーター制御初期化
 #dc_motor.setup()
 #画像でコーン検知する関数は終わりでTrueを無いときFalse
+#カメラ
+camera=picamera.PiCamera()
+camera.resolution(3200,2400)
 
 #PID
 class PID:
@@ -120,6 +124,9 @@ pre_maware=0
 
 bno055=bno.bno055()#bno055のインスタンス
 
+pic_pid=PID(pKp,pKi,pKd,pic_pre_error,pic_sum_error)
+pid=PID(Kp,Ki,Kd,pre_error,sum_error)
+
 try:
 ###################地上での準備###################
     get_goal_GPS=input("get goal gps")
@@ -140,14 +147,21 @@ try:
     air.air_main()#空中投下するばい
 
 ###################動く準備########################
-    accel_zenkai=bno.accel()
-    while(accel_zenkai[2]>0):#Z軸の加速度が正（ひっくり返っているとき）
+    accel_zenkai=bno055.accel()
+    print(accel_zenkai)
+    while(accel_zenkai[2]<0):#Z軸の加速度が正（ひっくり返っているとき）
         dc_motor.right(100,1)
         dc_motor.left(100,1)
         time.sleep(3) #3秒間前進
 
+    dc_motor.right(100,0)#モータ停止
+    dc_motor.left(100,0)
+
     while(bno055.check()< 1): #bno055のキャリブレーションステータス確認，1以上でおｋ
-        dc_motor.right(100,1)#その場で回転
+        dc_motor.right(100,1)#その場で左回転
+
+    dc_motor.right(100,0)#モータ停止
+    dc_motor.left(100,0)
 #####################################################
 
     while True:
@@ -155,19 +169,22 @@ try:
         own_angle = bno055.angle()#x,y,z軸周りのタプル
         print("angle is {0}".format(own_angle))
 
+        while own_angle is None: #none返したらbno止まってるので出るまで待つ
+            own_angle=bno055.angle()
+            print("bno error preangle is {0}".format(own_angle))
+        own_angle=own_angle[2]#z軸周り(ヨー)角度　東0から時計回りで360
+        '''
         if own_angle is None: #none返したらbno止まってるので前回own_angle使う
             own_angle=preown_angle
             print("bno error preangle is {0}".format(own_angle))
         else:
             own_angle=own_angle[2]#z軸周り(ヨー)角度　東0から時計回りで360
-
+        '''
         if 0 <= own_angle <= 90: #東0から~360なので，北0で右回り～180，左回り～－180の‐180＜0＜180 に補正
             own_angle+=90
         else:
             own_angle-=270
         #####################################################
-
-        i+=1#ループ回数
 
         ###################GPSで制御#########################
         dc_motor.left(100,0) #停止
@@ -187,7 +204,7 @@ try:
             azimuth=gps_calc.azimuth(own_la,own_lo,goal_la,goal_lo)
             distance=gps_calc.distance(own_la,own_lo,goal_la,goal_lo)
             #print(azimuth, bkw_azimuth, distance)
-            print(azimuth,diatance)
+            print(azimuth,distance)
             time.sleep(0.5)
 
             #初回でGPSとったとき
@@ -212,7 +229,7 @@ try:
             print("heading is {0}".format(heading))
             GPS_flag=False
         else:
-            heading=preheading-(own_angle-preown_angle)#GPSとった後は自分の角度差でheadingを更新していく
+            heading=pre_heading-(own_angle-preown_angle)#GPSとった後は自分の角度差でheadingを更新していく
         #######################################################
 
         preown_angle=own_angle#前回の角度保存
@@ -220,7 +237,6 @@ try:
 
     #PID
         error=np.abs(heading)/180 #偏差(絶対値) 0~1
-        pid=PID(Kp,Ki,Kd,pre_error,sum_error)
         u=pid.PID(error)
     #motor
         motor(heading,u,threshold,sleep_time)#動かす
