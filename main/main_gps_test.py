@@ -1,7 +1,7 @@
 import dc_motor
 import bno055 as bno
 import micropyGPS
-import pyproj
+#import pyproj
 import csv
 import serial
 import threading
@@ -9,14 +9,15 @@ import time
 import numpy as np
 import air_main_test as air
 #import camera_final as camera
+import gps_calc
 
 #目標の緯度，経度(ここ自動取得にする)
 goal_la = 34.72542167 #latitude
 goal_lo = 137.71619667 #longitude
 
 #インスタンス宣言
-gps = micropyGPS.MicropyGPS(9, 'dd')　#micropyGPSのインスタンス
-grs80 = pyproj.Geod(ellps='GRS80') #GRS80楕円体　pyprojのインスタンス
+gps = micropyGPS.MicropyGPS(9, 'dd')#micropyGPSのインスタンス
+#grs80 = pyproj.Geod(ellps='GRS80') #GRS80楕円体　pyprojのインスタンス
 #モーター制御初期化
 #dc_motor.setup()
 #画像でコーン検知する関数は終わりでTrueを無いときFalse
@@ -136,7 +137,7 @@ try:
         time.sleep(0.5)
 
     input("This is the final phase")
-air.air_main()#空中投下するばい
+    air.air_main()#空中投下するばい
 
 ###################動く準備########################
     accel_zenkai=bno.accel()
@@ -182,8 +183,11 @@ air.air_main()#空中投下するばい
             print('衛星番号: (仰角, 方位角, SN比)')
             own_la,own_lo= gps.latitude[0], gps.longitude[0]
             print('own_la is {0},own_lo is {1}'.format(own_la,own_lo))
-            azimuth, bkw_azimuth, distance = grs80.inv(own_lo, own_la, goal_lo, goal_la)
-            print(azimuth, bkw_azimuth, distance)
+            #azimuth, bkw_azimuth, distance = grs80.inv(own_lo, own_la, goal_lo, goal_la)
+            azimuth=gps_calc.azimuth(own_la,own_lo,goal_la,goal_lo)
+            distance=gps_calc.distance(own_la,own_lo,goal_la,goal_lo)
+            #print(azimuth, bkw_azimuth, distance)
+            print(azimuth,diatance)
             time.sleep(0.5)
 
             #初回でGPSとったとき
