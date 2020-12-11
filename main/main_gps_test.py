@@ -1,15 +1,15 @@
-import dc_motor
-import bno055 as bno
-import micropyGPS
+from move import dc_motor
+from bno055 import bno055 as bno
+from gps import micropyGPS
 #import pyproj
 import csv
 import serial
 import threading
 import time
 import numpy as np
-import air_main_test as air
+from AIR import air_main_test as air
 #import camera_final as camera
-import gps_calc
+from gps import gps_calc
 
 #目標の緯度，経度(ここ自動取得にする)
 goal_la = 34.72542167 #latitude
@@ -146,7 +146,7 @@ try:
         dc_motor.left(100,1)
         time.sleep(3) #3秒間前進
 
-    while(bno055.check()　< 1): #bno055のキャリブレーションステータス確認，1以上でおｋ
+    while(bno055.check()< 1): #bno055のキャリブレーションステータス確認，1以上でおｋ
         dc_motor.right(100,1)#その場で回転
 #####################################################
 
@@ -229,7 +229,7 @@ try:
             print("abnormal termination")
             dc_motor.right(100,0) #モータ停止
             dc_motor.left(100,0)
-            dc_motor.cleanup()　#clean
+            dc_motor.cleanup()#clean
             exit()
 
         if time.time()-last_time >= 60*3:#3分間待ってやる!
